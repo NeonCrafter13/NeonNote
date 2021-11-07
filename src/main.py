@@ -160,10 +160,10 @@ class Window(QMainWindow):
         print_to_pdf.triggered.connect(self.print_file)
 
         menubar = self.menuBar()
-        mod = menubar.addMenu("Mod")
-        mod.addAction(open)
-        mod.addAction(save)
-        mod.addAction(print_to_pdf)
+        file = menubar.addMenu("File")
+        file.addAction(open)
+        file.addAction(save)
+        file.addAction(print_to_pdf)
 
         self.setWindowState(Qt.WindowState.WindowMaximized)
         self.setWindowTitle("NeonNote")
