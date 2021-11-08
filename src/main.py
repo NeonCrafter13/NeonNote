@@ -2,6 +2,7 @@
 
 import sys
 from os.path import expanduser
+import os
 
 import markdown2
 from PyQt5.QtWidgets import (
@@ -45,8 +46,8 @@ class Browser(QWebEngineView):
         fileName, _ = fd.getSaveFileName(
             self,
             "Export to pdf",
-            ".pdf",
-            "All Files(*);;Text Files(*.pdf)")
+            os.path.join(expanduser("~"), ".pdf"),
+            "(*.pdf)")
         if fileName == "":
             return
 
@@ -95,8 +96,8 @@ class Editor(QPlainTextEdit):
             fileName, _ = fd.getSaveFileName(
                 self,
                 "Save File",
-                ".md",
-                "All Files(*);;Text Files(*.md)")
+                os.path.join(expanduser("~"), ".md"),
+                "(*.md)")
             if fileName == "":
                 return
             self.file_path = fileName
