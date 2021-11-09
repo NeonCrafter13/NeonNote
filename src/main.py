@@ -3,6 +3,7 @@
 import sys
 from os.path import expanduser
 import os
+from multiprocessing import Pipe, Process
 
 import markdown2
 from PyQt5.QtWidgets import (
@@ -14,10 +15,11 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QPlainTextEdit
 )
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QObject, Qt, pyqtSignal
+from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
+import server
 
 app = QApplication(sys.argv)
 
@@ -28,6 +30,7 @@ class Signals(QObject):
     save_file = pyqtSignal()
     print_file = pyqtSignal()
 
+parent_conn, child_conn = Pipe()
 sig = Signals()
 
 class Browser(QWebEngineView):
@@ -37,8 +40,8 @@ class Browser(QWebEngineView):
 
     def init_me(self):
         sig.set_html.connect(self.setHtml)
-        self.setHtml("<h1>Hello</h1>")
-
+        self.load(QUrl("http://127.0.0.1:5000"))
+        self.show()
         sig.print_file.connect(self.print_file)
 
     def print_file(self):
@@ -71,8 +74,11 @@ class Editor(QPlainTextEdit):
         html = str(markdown2.Markdown().convert(text))
         html = html.replace("$?", "\\(")
         html = html.replace("?$", "\\)")
-        html += '<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>\n<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
-        sig.set_html.emit(html)
+        # html += ''
+        # server.output_html = html
+        # sig.set_html.emit(html)
+        parent_conn.send(html)
+        # SEND HTML TO WEBSERVER PROCESS
 
     def open_file(self):
         fd = QFileDialog()
@@ -189,6 +195,12 @@ class Window(QMainWindow):
     def print_file(self):
         sig.print_file.emit()
 
-w = Window()
 
-sys.exit(app.exec_())
+if __name__ == '__main__':
+    p = Process(target=server.start, args=(child_conn,))
+    p.start()
+    w = Window()
+
+    app.exec_()
+    p.kill()
+    sys.exit()
